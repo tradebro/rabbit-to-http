@@ -13,8 +13,16 @@ uvloop.install()
 
 
 async def forward_to_http_endpoint(message_body: dict) -> bool:
-    response: httpx.Response = httpx.post(url=HTTP_ENDPOINT,
-                                          data=message_body)
+    try:
+        response: httpx.Response = httpx.post(url=HTTP_ENDPOINT,
+                                              data=message_body)
+    except httpx.HTTPError:
+        return False
+    except httpx.InvalidURL:
+        return False
+    except httpx.StreamError:
+        return False
+
     valid_status_codes = [
         200,
         201,
@@ -25,9 +33,9 @@ async def forward_to_http_endpoint(message_body: dict) -> bool:
 
 
 async def process_message(message: aio_pika.IncomingMessage):
-    async with message.process():
+    async with message.process(ignore_processed=True):
         message_body = ujson.loads(message.body)
-        forwarded = forward_to_http_endpoint(message_body=message_body)
+        forwarded = await forward_to_http_endpoint(message_body=message_body)
         if not forwarded:
             await message.nack(requeue=True)
             return
@@ -36,19 +44,23 @@ async def process_message(message: aio_pika.IncomingMessage):
 
 
 async def main(aio_loop) -> aio_pika.Connection:
-    connection: aio_pika.Connection = await aio_pika.connect_robust(url=AMQP_CONN_STRING,
-                                                                    loop=aio_loop)
+    conn: aio_pika.Connection = await aio_pika.connect_robust(url=AMQP_CONN_STRING,
+                                                              loop=aio_loop)
 
-    channel: aio_pika.Channel = await connection.channel()
-    queue: aio_pika.Queue = await channel.declare_queue(name=AMQP_QUEUE,
-                                                        auto_delete=True)
+    channel = await conn.channel()
+    queue = await channel.declare_queue(name=AMQP_QUEUE,
+                                        auto_delete=True)
 
     await queue.consume(process_message)
 
-    return connection
+    return conn
 
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(aio_loop=loop))
-    loop.close()
+    connection = loop.run_until_complete(main(aio_loop=loop))
+
+    try:
+        loop.run_forever()
+    finally:
+        loop.run_until_complete(connection.close())

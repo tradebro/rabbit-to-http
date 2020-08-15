@@ -1,15 +1,11 @@
 #!/usr/bin/env sh
 
-# Forwarder
-export FORWARDER="rabbitmq"
-
-# Telegram
-export TELEGRAM_TOKEN="472836801:AAGQgDhB0dg471Nvqc9RjqiXZJ4K2qnieHQ"
-export TELEGRAM_CHAT_ID="281144960"
-
 # RabbitMQ
-export AMQP_CONN_STRING="amqp://duzlxrtf:2AlZvDY_jW6rZPqB85NzpHH_LQY8Wc7H@mustang.rmq.cloudamqp.com/duzlxrtf"
-export AMQP_QUEUE="tv-alerts"
+export AMQP_CONN_STRING=""
+export AMQP_QUEUE=""
+
+# HTTP Endopint
+export HTTP_ENDPOINT=""
 
 . env/bin/activate
 python app.py
