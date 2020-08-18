@@ -15,7 +15,7 @@ uvloop.install()
 async def forward_to_http_endpoint(message_body: dict) -> bool:
     try:
         response: httpx.Response = httpx.post(url=HTTP_ENDPOINT,
-                                              data=message_body)
+                                              json=message_body)
     except httpx.HTTPError:
         return False
     except httpx.InvalidURL:
@@ -37,7 +37,7 @@ async def process_message(message: aio_pika.IncomingMessage):
         message_body = ujson.loads(message.body)
         forwarded = await forward_to_http_endpoint(message_body=message_body)
         if not forwarded:
-            await message.nack(requeue=True)
+            await message.nack(requeue=False)
             return
 
         await message.ack()
