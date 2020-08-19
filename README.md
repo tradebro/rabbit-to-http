@@ -8,6 +8,7 @@ This is a generic RabbitMQ consumer always forwarding messages to an HTTP endpoi
 | :--- | :--- |
 | `AMQP_CONN_STRING` | Required string |
 | `AMQP_QUEUE` | Required string, also known as routing key |
+| `AMQP_ORDERS_EXCHANGE` | Required string |
 | `HTTP_ENDPOINT` | HTTP Endpoint to forward to |
 
 ## How It Works
